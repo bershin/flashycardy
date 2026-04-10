@@ -1,0 +1,67 @@
+---
+description: Data retrieval via Server Components, mutations via Server Actions, validation via Zod
+alwaysApply: true
+---
+
+# Data Access Patterns
+
+## Retrieval — Server Components Only
+
+All data fetching must happen in React Server Components. Never fetch data in Client Components or via `useEffect`.
+
+```tsx
+// ❌ BAD — fetching in a Client Component
+"use client";
+export default function Decks() {
+  const [decks, setDecks] = useState([]);
+  useEffect(() => { fetch("/api/decks").then(…) }, []);
+}
+
+// ✅ GOOD — fetching in a Server Component
+import { db } from "@/db";
+import { decks } from "@/db/schema";
+
+export default async function DecksPage() {
+  const allDecks = await db.select().from(decks);
+  return <DeckList decks={allDecks} />;
+}
+```
+
+## Mutations — Server Actions Only
+
+All inserts, updates, and deletes must use Server Actions (`"use server"`). Never use API route handlers for mutations.
+
+```tsx
+// ❌ BAD — API route for mutation
+export async function POST(req: Request) { … }
+
+// ✅ GOOD — Server Action
+"use server";
+export async function createDeck(data: CreateDeckInput) { … }
+```
+
+## Validation — Zod with TypeScript Types
+
+Every Server Action must validate input with a Zod schema. Derive the TypeScript type from the schema using `z.infer`. Never use `FormData` as a parameter type.
+
+```tsx
+// ❌ BAD — FormData parameter, no validation
+async function createDeck(formData: FormData) {
+  const title = formData.get("title") as string;
+}
+
+// ✅ GOOD — Zod schema with inferred type
+import { z } from "zod";
+
+const createDeckSchema = z.object({
+  title: z.string().min(1).max(255),
+  description: z.string().optional(),
+});
+
+type CreateDeckInput = z.infer<typeof createDeckSchema>;
+
+async function createDeck(data: CreateDeckInput) {
+  const parsed = createDeckSchema.parse(data);
+  // use parsed.title, parsed.description
+}
+```

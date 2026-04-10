@@ -1,0 +1,33 @@
+---
+alwaysApply: true
+---
+# shadcn/ui — Project UI Standard
+
+Always use shadcn/ui components for UI. Do not create custom implementations of components that shadcn/ui already provides (buttons, dialogs, cards, inputs, dropdowns, etc.). Check the shadcn/ui registry before building anything from scratch.
+
+## Adding Components
+
+```bash
+npx shadcn@latest add <component>
+```
+
+Multiple at once:
+
+```bash
+npx shadcn@latest add button card dialog
+```
+
+## Importing Components
+
+Components live in `src/components/ui/` and are imported via the path alias:
+
+```tsx
+import { Button } from "@/components/ui/button"
+```
+
+## Project Stack
+
+- Next.js 16, React 19, TypeScript, Tailwind CSS v4
+- `@/*` alias maps to `./src/*`
+- No `tailwind.config.js` — theme config lives in CSS via `@theme` in `globals.css`
+- Colors use OKLCH format, not HSL
