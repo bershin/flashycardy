@@ -1,43 +1,106 @@
 ---
-description: Data retrieval via Server Components, mutations via Server Actions, validation via Zod
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Data Access Patterns
+
+## Data Access Layer — `src/db/queries/`
+
+All database reads and writes must be encapsulated in helper functions inside `src/db/queries/`. Never import `db` or call Drizzle query builders directly in Server Components, Server Actions, or API routes.
+
+Organize one file per domain entity (e.g., `src/db/queries/decks.ts`, `src/db/queries/cards.ts`).
+
+```tsx
+// src/db/queries/decks.ts
+import { db } from "@/db";
+import { decks } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+
+export async function getDecksByUser(userId: string) {
+  return db.select().from(decks).where(eq(decks.userId, userId));
+}
+
+export async function getDeckByIdForUser(deckId: number, userId: string) {
+  const [deck] = await db
+    .select()
+    .from(decks)
+    .where(and(eq(decks.id, deckId), eq(decks.userId, userId)));
+  return deck;
+}
+
+export async function insertDeck(data: { title: string; description?: string; userId: string }) {
+  const [deck] = await db.insert(decks).values(data).returning();
+  return deck;
+}
+```
+
+```tsx
+// src/db/queries/cards.ts
+import { db } from "@/db";
+import { cards, decks } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+
+// Read helpers join on `decks` to enforce ownership
+export async function getCardsByDeckForUser(deckId: number, userId: string) {
+  return db
+    .select({ card: cards })
+    .from(cards)
+    .innerJoin(decks, eq(cards.deckId, decks.id))
+    .where(and(eq(cards.deckId, deckId), eq(decks.userId, userId)))
+    .then((rows) => rows.map((r) => r.card));
+}
+
+export async function insertCard(data: { deckId: number; front: string; back: string }) {
+  const [card] = await db.insert(cards).values(data).returning();
+  return card;
+}
+```
 
 ## Retrieval — Server Components Only
 
-All data fetching must happen in React Server Components. Never fetch data in Client Components or via `useEffect`.
+All data fetching must happen in React Server Components. Never fetch data in Client Components or via `useEffect`. Call query helpers from `@/db/queries/*` — never use `db` directly.
 
 ```tsx
-// ❌ BAD — fetching in a Client Component
-"use client";
-export default function Decks() {
-  const [decks, setDecks] = useState([]);
-  useEffect(() => { fetch("/api/decks").then(…) }, []);
-}
-
-// ✅ GOOD — fetching in a Server Component
+// ❌ BAD — inline Drizzle call in a Server Component
 import { db } from "@/db";
 import { decks } from "@/db/schema";
 
 export default async function DecksPage() {
   const allDecks = await db.select().from(decks);
+}
+
+// ✅ GOOD — delegates to a query helper
+import { getDecksByUser } from "@/db/queries/decks";
+
+export default async function DecksPage() {
+  const { userId } = await auth();
+  const allDecks = await getDecksByUser(userId!);
   return <DeckList decks={allDecks} />;
 }
 ```
 
 ## Mutations — Server Actions Only
 
-All inserts, updates, and deletes must use Server Actions (`"use server"`). Never use API route handlers for mutations.
+All inserts, updates, and deletes must use Server Actions (`"use server"`). Never use API route handlers for mutations. Server Actions call mutation helpers from `@/db/queries/*` — never use `db` directly.
 
 ```tsx
-// ❌ BAD — API route for mutation
-export async function POST(req: Request) { … }
-
-// ✅ GOOD — Server Action
+// ❌ BAD — inline Drizzle call in a Server Action
 "use server";
-export async function createDeck(data: CreateDeckInput) { … }
+import { db } from "@/db";
+import { decks } from "@/db/schema";
+
+export async function createDeck(data: CreateDeckInput) {
+  await db.insert(decks).values({ ...data, userId });
+}
+
+// ✅ GOOD — delegates to a query helper
+"use server";
+import { insertDeck } from "@/db/queries/decks";
+
+export async function createDeck(data: CreateDeckInput) {
+  const parsed = createDeckSchema.parse(data);
+  const { userId } = await auth();
+  return insertDeck({ ...parsed, userId: userId! });
+}
 ```
 
 ## Validation — Zod with TypeScript Types
@@ -65,3 +128,12 @@ async function createDeck(data: CreateDeckInput) {
   // use parsed.title, parsed.description
 }
 ```
+
+## Rules Summary
+
+- `db` and Drizzle table imports belong **only** in `src/db/queries/*.ts` files.
+- Server Components and Server Actions import from `@/db/queries/*`, never from `@/db` directly.
+- One query file per domain entity: `decks.ts`, `cards.ts`, etc.
+- Query helpers handle all ownership-scoped filtering (accept `userId` as a parameter).
+- For child entities (e.g., `cards` → `decks`), read helpers must `innerJoin` the parent table and filter on `userId` to enforce ownership.
+- Keep query helpers pure data access — no auth checks or validation inside them. Auth and validation stay in the calling Server Component or Server Action.

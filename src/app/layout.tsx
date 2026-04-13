@@ -9,6 +9,8 @@ import {
 } from "@clerk/nextjs";
 import { dark } from "@clerk/ui/themes";
 import { Button } from "@/components/ui/button";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { PLANS } from "@/lib/plans";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -35,22 +37,29 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ClerkProvider appearance={{ theme: dark }}>
-          <header className="flex items-center justify-end gap-4 p-4">
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <Button variant="outline" size="lg">
-                  Sign In
-                </Button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <Button size="lg">Sign Up</Button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </header>
-          {children}
+          <TooltipProvider>
+            <header className="flex items-center justify-end gap-4 p-4">
+              <Show when="signed-out">
+                <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                  <Button variant="outline" size="lg">
+                    Sign In
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
+                  <Button size="lg">Sign Up</Button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-in">
+                <Show when={{ plan: PLANS.PRO }}>
+                  <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                    Pro
+                  </span>
+                </Show>
+                <UserButton />
+              </Show>
+            </header>
+            {children}
+          </TooltipProvider>
         </ClerkProvider>
       </body>
     </html>

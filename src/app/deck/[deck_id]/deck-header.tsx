@@ -1,0 +1,181 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { BookOpen, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { EditDeckDialog } from "@/components/edit-deck-dialog";
+import { AddCardDialog } from "@/components/add-card-dialog";
+import { deleteDeckAction } from "@/app/dashboard/actions";
+import { generateCardsWithAIAction } from "./actions";
+
+interface DeckHeaderProps {
+  deck: {
+    id: number;
+    title: string;
+    description: string | null;
+  };
+  cardCount: number;
+  hasAIFeature: boolean;
+}
+
+export function DeckHeader({ deck, cardCount, hasAIFeature }: DeckHeaderProps) {
+  const router = useRouter();
+  const [editOpen, setEditOpen] = useState(false);
+  const [addCardOpen, setAddCardOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [isGenerating, startGenerating] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      try {
+        await deleteDeckAction({ deckId: deck.id });
+        router.push("/dashboard");
+      } catch {
+        // TODO: surface error via toast
+      }
+    });
+  }
+
+  function handleGenerateAI() {
+    if (!hasAIFeature) {
+      router.push("/pricing");
+      return;
+    }
+    startGenerating(async () => {
+      try {
+        await generateCardsWithAIAction(deck.id);
+      } catch {
+        // TODO: surface error via toast
+      }
+    });
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">{deck.title}</h1>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setEditOpen(true)}
+        >
+          <Pencil className="size-4" />
+          <span className="sr-only">Edit deck</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setDeleteOpen(true)}
+        >
+          <Trash2 className="size-4" />
+          <span className="sr-only">Delete deck</span>
+        </Button>
+      </div>
+      {deck.description && (
+        <p className="mt-1 text-muted-foreground">{deck.description}</p>
+      )}
+      <div className="mt-3 flex items-center gap-3">
+        <p className="text-sm text-muted-foreground">
+          {cardCount === 0
+            ? "No cards yet. Add some to get started!"
+            : `${cardCount} card${cardCount === 1 ? "" : "s"}`}
+        </p>
+        <Button size="sm" onClick={() => setAddCardOpen(true)}>
+          <Plus className="size-4" />
+          Add Card
+        </Button>
+        {hasAIFeature ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleGenerateAI}
+            disabled={isGenerating}
+          >
+            <Sparkles className="size-4" />
+            {isGenerating ? "Generating…" : "Generate with AI"}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleGenerateAI}
+                />
+              }
+            >
+              <Sparkles className="size-4" />
+              Generate with AI
+            </TooltipTrigger>
+            <TooltipContent>
+              AI generation is a Pro feature. Click to view plans.
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {cardCount > 0 && (
+          <Link
+            href={`/deck/${deck.id}/study`}
+            className={buttonVariants({ size: "sm", variant: "secondary" })}
+          >
+            <BookOpen className="size-3.5" />
+            Study
+          </Link>
+        )}
+      </div>
+
+      <EditDeckDialog
+        deckId={deck.id}
+        title={deck.title}
+        description={deck.description}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+      <AddCardDialog
+        deckId={deck.id}
+        open={addCardOpen}
+        onOpenChange={setAddCardOpen}
+      />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &ldquo;{deck.title}&rdquo;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this deck and all of its cards. This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending ? "Deleting\u2026" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
