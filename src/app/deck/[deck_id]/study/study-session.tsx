@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
 import {
   ArrowLeft,
   RotateCcw,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { rateCardAction } from "./actions";
 
 interface StudyCard {
   id: number;
@@ -21,6 +22,7 @@ interface StudyCard {
 
 interface StudySessionProps {
   cards: StudyCard[];
+  deckId: number;
 }
 
 type Rating = "got_it" | "missed";
@@ -34,13 +36,14 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
-export function StudySession({ cards }: StudySessionProps) {
+export function StudySession({ cards, deckId }: StudySessionProps) {
   const [studyCards, setStudyCards] = useState(cards);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [finished, setFinished] = useState(false);
   const [ratings, setRatings] = useState<Map<number, Rating>>(new Map());
   const [round, setRound] = useState(1);
+  const [isPending, startTransition] = useTransition();
 
   const current = studyCards[currentIndex];
   const total = studyCards.length;
@@ -67,6 +70,11 @@ export function StudySession({ cards }: StudySessionProps) {
         next.set(current.id, rating);
         return next;
       });
+
+      startTransition(async () => {
+        await rateCardAction({ cardId: current.id, deckId, rating });
+      });
+
       if (currentIndex < total - 1) {
         setCurrentIndex((i) => i + 1);
         setFlipped(false);
@@ -74,7 +82,7 @@ export function StudySession({ cards }: StudySessionProps) {
         setFinished(true);
       }
     },
-    [current, currentIndex, total],
+    [current, currentIndex, total, deckId],
   );
 
   const goPrev = useCallback(() => {
@@ -330,6 +338,7 @@ export function StudySession({ cards }: StudySessionProps) {
             <Button
               variant="outline"
               onClick={() => rate("missed")}
+              disabled={isPending}
               className="border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-500"
             >
               <X className="size-4" />
@@ -338,6 +347,7 @@ export function StudySession({ cards }: StudySessionProps) {
             <Button
               variant="outline"
               onClick={() => rate("got_it")}
+              disabled={isPending}
               className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500"
             >
               <Check className="size-4" />

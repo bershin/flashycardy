@@ -1,8 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 import { getDeckByIdForUser } from "@/db/queries/decks";
-import { getCardsByDeckForUser } from "@/db/queries/cards";
+import {
+  getCardsByDeckForUser,
+  getDueCardsByDeckForUser,
+} from "@/db/queries/cards";
 import { StudySession } from "./study-session";
 
 export default async function StudyPage({
@@ -20,9 +24,9 @@ export default async function StudyPage({
   const deck = await getDeckByIdForUser(deckId, userId);
   if (!deck) notFound();
 
-  const cards = await getCardsByDeckForUser(deckId, userId);
+  const allCards = await getCardsByDeckForUser(deckId, userId);
 
-  if (cards.length === 0) {
+  if (allCards.length === 0) {
     return (
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <Link
@@ -47,6 +51,38 @@ export default async function StudyPage({
     );
   }
 
+  const dueCards = await getDueCardsByDeckForUser(deckId, userId);
+
+  if (dueCards.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <Link
+          href={`/deck/${deck_id}`}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          &larr; Back to deck
+        </Link>
+        <div className="mt-16 flex flex-col items-center text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-emerald-500/10">
+            <CheckCircle className="size-8 text-emerald-500" />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">
+            {deck.title}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            No cards are due for review right now. Check back later!
+          </p>
+          <Link
+            href={`/deck/${deck_id}`}
+            className="mt-4 inline-block text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Back to deck
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
@@ -56,7 +92,10 @@ export default async function StudyPage({
         &larr; Back to deck
       </Link>
       <h1 className="mt-4 text-2xl font-bold tracking-tight">{deck.title}</h1>
-      <StudySession cards={cards} />
+      <p className="mt-1 text-sm text-muted-foreground">
+        {dueCards.length} card{dueCards.length === 1 ? "" : "s"} due for review
+      </p>
+      <StudySession cards={dueCards} deckId={deckId} />
     </div>
   );
 }
