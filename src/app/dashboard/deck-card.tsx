@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { BookOpen, CheckCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,6 +30,8 @@ interface DeckCardProps {
     title: string;
     description: string | null;
     updatedAtFormatted: string;
+    totalCards: number;
+    dueCount: number;
   };
 }
 
@@ -58,10 +60,23 @@ export function DeckCard({ deck }: DeckCardProps) {
               <CardDescription>{deck.description}</CardDescription>
             )}
           </CardHeader>
-          <CardFooter>
+          <CardFooter className="flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               Updated {deck.updatedAtFormatted}
             </p>
+            {deck.totalCards > 0 && (
+              deck.dueCount > 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <BookOpen className="size-3" />
+                  {deck.dueCount} due
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle className="size-3" />
+                  All caught up
+                </span>
+              )
+            )}
           </CardFooter>
         </Card>
       </Link>

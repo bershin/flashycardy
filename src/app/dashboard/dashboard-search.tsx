@@ -17,6 +17,8 @@ interface DeckWithCards {
   description: string | null;
   updatedAtFormatted: string;
   cards: CardData[];
+  totalCards: number;
+  dueCount: number;
 }
 
 interface DashboardSearchProps {
@@ -88,6 +90,8 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
                 title: deck.title,
                 description: deck.description,
                 updatedAtFormatted: deck.updatedAtFormatted,
+                totalCards: deck.totalCards,
+                dueCount: deck.dueCount,
               }}
             />
             {isSearching && matchingCards.length > 0 && (

@@ -70,10 +70,20 @@ export default async function DashboardPage() {
       )}
 
       <DashboardSearch
-        decks={userDecks.map((deck) => ({
-          ...deck,
-          updatedAtFormatted: deck.updatedAt.toLocaleDateString("en-US"),
-        }))}
+        decks={userDecks.map((deck) => {
+          const now = new Date();
+          const totalCards = deck.cards.length;
+          const dueCount = deck.cards.filter(
+            (c) => c.nextReviewAt <= now,
+          ).length;
+
+          return {
+            ...deck,
+            updatedAtFormatted: deck.updatedAt.toLocaleDateString("en-US"),
+            totalCards,
+            dueCount,
+          };
+        })}
       />
     </div>
   );
