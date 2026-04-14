@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { decks } from "@/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { decks, cards } from "@/db/schema";
+import { eq, and, count, inArray } from "drizzle-orm";
 
 export async function getDecksByUser(userId: string) {
   return db.select().from(decks).where(eq(decks.userId, userId));
@@ -20,6 +20,33 @@ export async function getDeckByIdForUser(deckId: number, userId: string) {
     .from(decks)
     .where(and(eq(decks.id, deckId), eq(decks.userId, userId)));
   return deck;
+}
+
+export async function getDecksWithCardsByUser(userId: string) {
+  const userDecks = await db
+    .select()
+    .from(decks)
+    .where(eq(decks.userId, userId));
+
+  if (userDecks.length === 0) return [];
+
+  const deckIds = userDecks.map((d) => d.id);
+  const allCards = await db
+    .select()
+    .from(cards)
+    .where(inArray(cards.deckId, deckIds));
+
+  const cardsByDeck = new Map<number, (typeof allCards)[number][]>();
+  for (const card of allCards) {
+    const list = cardsByDeck.get(card.deckId) ?? [];
+    list.push(card);
+    cardsByDeck.set(card.deckId, list);
+  }
+
+  return userDecks.map((deck) => ({
+    ...deck,
+    cards: cardsByDeck.get(deck.id) ?? [],
+  }));
 }
 
 export async function insertDeck(data: {

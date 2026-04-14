@@ -2,15 +2,15 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FREE_DECK_LIMIT, FEATURES } from "@/lib/plans";
-import { getDecksByUser } from "@/db/queries/decks";
-import { DeckCard } from "./deck-card";
+import { getDecksWithCardsByUser } from "@/db/queries/decks";
 import { CreateDeckButton } from "./create-deck-button";
+import { DashboardSearch } from "./dashboard-search";
 
 export default async function DashboardPage() {
   const { userId, has } = await auth();
   if (!userId) redirect("/");
 
-  const userDecks = await getDecksByUser(userId);
+  const userDecks = await getDecksWithCardsByUser(userId);
   const hasUnlimitedDecks = has({ feature: FEATURES.UNLIMITED_DECK });
   const canCreateDeck = hasUnlimitedDecks || userDecks.length < FREE_DECK_LIMIT;
 
@@ -69,17 +69,12 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        {userDecks.map((deck) => (
-          <DeckCard
-            key={deck.id}
-            deck={{
-              ...deck,
-              updatedAtFormatted: deck.updatedAt.toLocaleDateString(),
-            }}
-          />
-        ))}
-      </div>
+      <DashboardSearch
+        decks={userDecks.map((deck) => ({
+          ...deck,
+          updatedAtFormatted: deck.updatedAt.toLocaleDateString("en-US"),
+        }))}
+      />
     </div>
   );
 }
