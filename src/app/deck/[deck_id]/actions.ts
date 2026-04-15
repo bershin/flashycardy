@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateText, Output } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { FEATURES } from "@/lib/plans";
 import { getDeckByIdForUser } from "@/db/queries/decks";
 import {
@@ -107,7 +108,7 @@ export async function generateCardsWithAIAction(deckId: number) {
     : deck.title;
 
   const { output } = await generateText({
-    model: "openai/gpt-5.3-chat",
+    model: openai("gpt-5.3-chat-latest"),
     output: Output.object({
       schema: z.object({
         cards: z
