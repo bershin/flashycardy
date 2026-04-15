@@ -71,10 +71,12 @@ export default async function DashboardPage() {
 
       <DashboardSearch
         decks={userDecks.map((deck) => {
-          const now = new Date();
+          const endOfToday = new Date();
+          endOfToday.setHours(0, 0, 0, 0);
+          endOfToday.setDate(endOfToday.getDate() + 1);
           const totalCards = deck.cards.length;
           const dueCount = deck.cards.filter(
-            (c) => c.nextReviewAt <= now,
+            (c) => c.nextReviewAt < endOfToday,
           ).length;
 
           return {

@@ -65,7 +65,9 @@ export async function getDueCardsByDeckForUser(
   deckId: number,
   userId: string,
 ) {
-  const now = new Date();
+  const endOfToday = startOfDay(new Date());
+  endOfToday.setDate(endOfToday.getDate() + 1);
+
   return db
     .select({ card: cards })
     .from(cards)
@@ -74,7 +76,7 @@ export async function getDueCardsByDeckForUser(
       and(
         eq(cards.deckId, deckId),
         eq(decks.userId, userId),
-        lte(cards.nextReviewAt, now),
+        lte(cards.nextReviewAt, endOfToday),
       ),
     )
     .orderBy(desc(cards.updatedAt))
@@ -90,15 +92,16 @@ export async function recordStudyResult(
   if (!existing) throw new Error("Card not found");
 
   const now = new Date();
+  const today = startOfDay(now);
   let consecutiveCorrect: number;
   let nextReviewAt: Date;
 
   if (rating === "missed") {
     consecutiveCorrect = 0;
-    nextReviewAt = addDays(now, 1);
+    nextReviewAt = addDays(today, 1);
   } else {
     consecutiveCorrect = existing.consecutiveCorrect + 1;
-    nextReviewAt = consecutiveCorrect >= 2 ? addDays(now, 7) : addDays(now, 1);
+    nextReviewAt = consecutiveCorrect >= 2 ? addDays(today, 7) : addDays(today, 1);
   }
 
   const [card] = await db
@@ -118,6 +121,12 @@ export async function recordStudyResult(
     )
     .returning();
   return card;
+}
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 function addDays(date: Date, days: number): Date {
