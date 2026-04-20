@@ -53,8 +53,8 @@ export async function createDeckAction(data: CreateDeckInput) {
 
   const deck = await insertDeck({
     title: parsed.title,
-    description: parsed.description,
-    parentId: parsed.parentId,
+    description: parsed.description ?? undefined,
+    parentId: parsed.parentId ?? undefined,
     userId,
   });
 
@@ -81,7 +81,7 @@ export async function updateDeckAction(data: UpdateDeckInput) {
 
   const deck = await updateDeck(parsed.deckId, userId, {
     title: parsed.title,
-    description: parsed.description,
+    description: parsed.description ?? undefined,
   });
 
   if (!deck) throw new Error("Deck not found");
