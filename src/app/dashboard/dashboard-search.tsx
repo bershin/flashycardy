@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
 import {
   DndContext,
@@ -81,6 +81,10 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
   const [query, setQuery] = useState("");
   const [orderedDecks, setOrderedDecks] = useState(decks);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    setOrderedDecks(decks);
+  }, [decks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -168,7 +172,7 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
       )}
 
       {isSearching ? (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(({ deck, matchingCards }) => (
             <div key={deck.id} className="flex flex-col gap-2">
               <DeckCard
@@ -203,7 +207,7 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
             items={orderedDecks.map((d) => d.id)}
             strategy={rectSortingStrategy}
           >
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {orderedDecks.map((deck) => (
                 <SortableDeckItem key={deck.id} deck={deck}>
                   <DeckCard

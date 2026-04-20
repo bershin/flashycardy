@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -69,6 +69,10 @@ export function SortableChildDecks({
   const [orderedDecks, setOrderedDecks] = useState(decks);
   const [, startTransition] = useTransition();
 
+  useEffect(() => {
+    setOrderedDecks(decks);
+  }, [decks]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
@@ -108,7 +112,7 @@ export function SortableChildDecks({
         items={orderedDecks.map((d) => d.id)}
         strategy={rectSortingStrategy}
       >
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {orderedDecks.map((deck) => (
             <SortableItem key={deck.id} id={deck.id}>
               <ChildDeckCard deck={deck} />

@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const canCreateDeck = hasUnlimitedDecks || userDecks.length < FREE_DECK_LIMIT;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">

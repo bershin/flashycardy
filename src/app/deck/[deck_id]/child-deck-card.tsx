@@ -54,7 +54,7 @@ export function ChildDeckCard({ deck }: ChildDeckCardProps) {
 
   return (
     <div className="group/deck relative">
-      <Card className="transition-colors hover:bg-muted/50">
+      <Card size="sm" className="transition-colors hover:bg-muted/50">
         <Link href={`/deck/${deck.id}`}>
           <CardHeader>
             <CardTitle>{deck.title}</CardTitle>
