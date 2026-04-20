@@ -84,6 +84,7 @@ export default async function DashboardPage() {
             updatedAtFormatted: deck.updatedAt.toLocaleDateString("en-US"),
             totalCards,
             dueCount,
+            childCount: deck.childCount,
           };
         })}
       />

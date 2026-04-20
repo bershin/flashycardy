@@ -11,6 +11,8 @@ export const decks = pgTable("decks", {
   userId: varchar({ length: 255 }).notNull(),
   title: varchar({ length: 255 }).notNull(),
   description: text(),
+  parentId: integer(),
+  position: integer().default(0).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
 });

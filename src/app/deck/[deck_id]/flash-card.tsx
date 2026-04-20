@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -49,7 +48,10 @@ export function FlashCard({ card }: FlashCardProps) {
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base">{card.front}</CardTitle>
+            <div
+              className="rich-content text-base font-semibold"
+              dangerouslySetInnerHTML={{ __html: card.front }}
+            />
             <div className="flex shrink-0 gap-0.5">
               <Button
                 variant="ghost"
@@ -71,7 +73,10 @@ export function FlashCard({ card }: FlashCardProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">{card.back}</p>
+          <div
+            className="rich-content text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: card.back }}
+          />
         </CardContent>
       </Card>
 

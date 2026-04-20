@@ -1,9 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Input } from "@/components/ui/input";
 import { DeckCard } from "./deck-card";
+import { reorderDecksAction } from "./actions";
 
 interface CardData {
   id: number;
@@ -19,20 +36,70 @@ interface DeckWithCards {
   cards: CardData[];
   totalCards: number;
   dueCount: number;
+  childCount: number;
 }
 
 interface DashboardSearchProps {
   decks: DeckWithCards[];
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
+function SortableDeckItem({
+  deck,
+  children,
+}: {
+  deck: DeckWithCards;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: deck.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+}
+
 export function DashboardSearch({ decks }: DashboardSearchProps) {
+  const dndId = useId();
   const [query, setQuery] = useState("");
+  const [orderedDecks, setOrderedDecks] = useState(decks);
+  const [, startTransition] = useTransition();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const isSearching = query.trim().length > 0;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return decks.map((deck) => ({ deck, matchingCards: [] as CardData[] }));
+    if (!q)
+      return orderedDecks.map((deck) => ({
+        deck,
+        matchingCards: [] as CardData[],
+      }));
 
-    return decks
+    return orderedDecks
       .map((deck) => {
         const titleMatch =
           deck.title.toLowerCase().includes(q) ||
@@ -40,16 +107,35 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
 
         const matchingCards = deck.cards.filter(
           (card) =>
-            card.front.toLowerCase().includes(q) ||
-            card.back.toLowerCase().includes(q),
+            stripHtml(card.front).toLowerCase().includes(q) ||
+            stripHtml(card.back).toLowerCase().includes(q),
         );
 
         return { deck, matchingCards, titleMatch };
       })
-      .filter(({ titleMatch, matchingCards }) => titleMatch || matchingCards.length > 0);
-  }, [query, decks]);
+      .filter(
+        ({ titleMatch, matchingCards }) =>
+          titleMatch || matchingCards.length > 0,
+      );
+  }, [query, orderedDecks]);
 
-  const isSearching = query.trim().length > 0;
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedDecks.findIndex((d) => d.id === active.id);
+    const newIndex = orderedDecks.findIndex((d) => d.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrder = [...orderedDecks];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+    setOrderedDecks(newOrder);
+
+    startTransition(async () => {
+      await reorderDecksAction({ orderedIds: newOrder.map((d) => d.id) });
+    });
+  }
 
   return (
     <>
@@ -81,29 +167,62 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
         </p>
       )}
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        {filtered.map(({ deck, matchingCards }) => (
-          <div key={deck.id} className="flex flex-col gap-2">
-            <DeckCard
-              deck={{
-                id: deck.id,
-                title: deck.title,
-                description: deck.description,
-                updatedAtFormatted: deck.updatedAtFormatted,
-                totalCards: deck.totalCards,
-                dueCount: deck.dueCount,
-              }}
-            />
-            {isSearching && matchingCards.length > 0 && (
-              <div className="ml-3 space-y-1.5 border-l-2 border-violet-300 pl-3 dark:border-violet-700">
-                {matchingCards.map((card) => (
-                  <MatchingCard key={card.id} card={card} query={query} />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {isSearching ? (
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {filtered.map(({ deck, matchingCards }) => (
+            <div key={deck.id} className="flex flex-col gap-2">
+              <DeckCard
+                deck={{
+                  id: deck.id,
+                  title: deck.title,
+                  description: deck.description,
+                  updatedAtFormatted: deck.updatedAtFormatted,
+                  totalCards: deck.totalCards,
+                  dueCount: deck.dueCount,
+                  childCount: deck.childCount,
+                }}
+              />
+              {matchingCards.length > 0 && (
+                <div className="ml-3 space-y-1.5 border-l-2 border-violet-300 pl-3 dark:border-violet-700">
+                  {matchingCards.map((card) => (
+                    <MatchingCard key={card.id} card={card} query={query} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <DndContext
+          id={dndId}
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={orderedDecks.map((d) => d.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {orderedDecks.map((deck) => (
+                <SortableDeckItem key={deck.id} deck={deck}>
+                  <DeckCard
+                    deck={{
+                      id: deck.id,
+                      title: deck.title,
+                      description: deck.description,
+                      updatedAtFormatted: deck.updatedAtFormatted,
+                      totalCards: deck.totalCards,
+                      dueCount: deck.dueCount,
+                      childCount: deck.childCount,
+                    }}
+                  />
+                </SortableDeckItem>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
     </>
   );
 }
@@ -115,13 +234,13 @@ function MatchingCard({ card, query }: { card: CardData; query: string }) {
         <span className="text-muted-foreground mr-1.5 text-xs font-medium uppercase">
           Front
         </span>
-        <Highlighted text={card.front} query={query} />
+        <Highlighted text={stripHtml(card.front)} query={query} />
       </div>
       <div className="mt-1">
         <span className="text-muted-foreground mr-1.5 text-xs font-medium uppercase">
           Back
         </span>
-        <Highlighted text={card.back} query={query} />
+        <Highlighted text={stripHtml(card.back)} query={query} />
       </div>
     </div>
   );
@@ -143,7 +262,10 @@ function Highlighted({ text, query }: { text: string; query: string }) {
     if (idx > 0) {
       parts.push({ text: remaining.slice(0, idx), highlight: false });
     }
-    parts.push({ text: remaining.slice(idx, idx + q.length), highlight: true });
+    parts.push({
+      text: remaining.slice(idx, idx + q.length),
+      highlight: true,
+    });
     remaining = remaining.slice(idx + q.length);
   }
 

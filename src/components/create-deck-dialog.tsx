@@ -17,9 +17,10 @@ import { createDeckAction } from "@/app/dashboard/actions";
 interface CreateDeckDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  parentId?: number;
 }
 
-export function CreateDeckDialog({ open, onOpenChange }: CreateDeckDialogProps) {
+export function CreateDeckDialog({ open, onOpenChange, parentId }: CreateDeckDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -50,6 +51,7 @@ export function CreateDeckDialog({ open, onOpenChange }: CreateDeckDialogProps) 
         await createDeckAction({
           title: title.trim(),
           description: description.trim() || undefined,
+          parentId,
         });
         onOpenChange(false);
         resetForm();
@@ -64,9 +66,11 @@ export function CreateDeckDialog({ open, onOpenChange }: CreateDeckDialogProps) 
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create Deck</DialogTitle>
+            <DialogTitle>{parentId ? "Create Sub-Deck" : "Create Deck"}</DialogTitle>
             <DialogDescription>
-              Add a new flashcard deck to your collection.
+              {parentId
+                ? "Add a new sub-deck to this deck."
+                : "Add a new flashcard deck to your collection."}
             </DialogDescription>
           </DialogHeader>
 
@@ -103,7 +107,7 @@ export function CreateDeckDialog({ open, onOpenChange }: CreateDeckDialogProps) 
 
           <DialogFooter className="mt-4">
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating…" : "Create Deck"}
+              {isPending ? "Creating…" : parentId ? "Create Sub-Deck" : "Create Deck"}
             </Button>
           </DialogFooter>
         </form>

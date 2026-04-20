@@ -303,9 +303,10 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
               <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Question
               </p>
-              <p className="text-center text-xl leading-relaxed">
-                {current.front}
-              </p>
+              <div
+                className="rich-content w-full text-left text-xl leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: current.front }}
+              />
               <p className="mt-6 text-xs text-muted-foreground">
                 Click or press{" "}
                 <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[0.7rem]">
@@ -322,9 +323,10 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
               <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Answer
               </p>
-              <p className="text-center text-xl leading-relaxed">
-                {current.back}
-              </p>
+              <div
+                className="rich-content w-full text-left text-xl leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: current.back }}
+              />
             </CardContent>
           </Card>
         </div>

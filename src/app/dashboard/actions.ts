@@ -9,11 +9,15 @@ import {
   updateDeck,
   deleteDeck,
   getDeckCountByUser,
+  getDeckByIdForUser,
+  reorderDecks,
 } from "@/db/queries/decks";
+import { getCardsByDeckForUser } from "@/db/queries/cards";
 
 const createDeckSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).nullish(),
+  parentId: z.number().nullish(),
 });
 
 type CreateDeckInput = z.infer<typeof createDeckSchema>;
@@ -24,7 +28,21 @@ export async function createDeckAction(data: CreateDeckInput) {
 
   const parsed = createDeckSchema.parse(data);
 
-  if (!has({ feature: FEATURES.UNLIMITED_DECK })) {
+  if (parsed.parentId) {
+    const parent = await getDeckByIdForUser(parsed.parentId, userId);
+    if (!parent) throw new Error("Parent deck not found");
+    if (parent.parentId !== null) {
+      throw new Error("Cannot nest more than one level deep.");
+    }
+    const parentCards = await getCardsByDeckForUser(parsed.parentId, userId);
+    if (parentCards.length > 0) {
+      throw new Error(
+        "Cannot add sub-decks to a deck that already has cards.",
+      );
+    }
+  }
+
+  if (!parsed.parentId && !has({ feature: FEATURES.UNLIMITED_DECK })) {
     const deckCount = await getDeckCountByUser(userId);
     if (deckCount >= FREE_DECK_LIMIT) {
       throw new Error(
@@ -36,17 +54,21 @@ export async function createDeckAction(data: CreateDeckInput) {
   const deck = await insertDeck({
     title: parsed.title,
     description: parsed.description,
+    parentId: parsed.parentId,
     userId,
   });
 
   revalidatePath("/dashboard");
+  if (parsed.parentId) {
+    revalidatePath(`/deck/${parsed.parentId}`);
+  }
   return deck;
 }
 
 const updateDeckSchema = z.object({
   deckId: z.number(),
   title: z.string().min(1, "Title is required").max(255),
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).nullish(),
 });
 
 type UpdateDeckInput = z.infer<typeof updateDeckSchema>;
@@ -87,4 +109,24 @@ export async function deleteDeckAction(data: DeleteDeckInput) {
 
   revalidatePath("/dashboard");
   return deck;
+}
+
+const reorderDecksSchema = z.object({
+  orderedIds: z.array(z.number()).min(1),
+  parentId: z.number().nullish(),
+});
+
+type ReorderDecksInput = z.infer<typeof reorderDecksSchema>;
+
+export async function reorderDecksAction(data: ReorderDecksInput) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const parsed = reorderDecksSchema.parse(data);
+  await reorderDecks(userId, parsed.orderedIds);
+
+  revalidatePath("/dashboard");
+  if (parsed.parentId) {
+    revalidatePath(`/deck/${parsed.parentId}`);
+  }
 }

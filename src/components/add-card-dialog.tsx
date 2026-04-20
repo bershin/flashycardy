@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { addCardAction } from "@/app/deck/[deck_id]/actions";
 
 interface AddCardDialogProps {
@@ -45,11 +45,16 @@ export function AddCardDialog({
     e.preventDefault();
     setError(null);
 
-    if (!front.trim()) {
+    const isEmpty = (html: string) => {
+      const text = html.replace(/<[^>]*>/g, "").trim();
+      return text.length === 0;
+    };
+
+    if (isEmpty(front)) {
       setError("Front side is required");
       return;
     }
-    if (!back.trim()) {
+    if (isEmpty(back)) {
       setError("Back side is required");
       return;
     }
@@ -58,8 +63,8 @@ export function AddCardDialog({
       try {
         await addCardAction({
           deckId,
-          front: front.trim(),
-          back: back.trim(),
+          front,
+          back,
         });
         resetForm();
         onOpenChange(false);
@@ -82,25 +87,21 @@ export function AddCardDialog({
 
           <div className="mt-4 grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="card-front">Front</Label>
-              <Textarea
-                id="card-front"
+              <Label>Front</Label>
+              <RichTextEditor
+                content={front}
+                onChange={setFront}
                 placeholder="Question or term…"
-                value={front}
-                onChange={(e) => setFront(e.target.value)}
-                maxLength={5000}
                 disabled={isPending}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="card-back">Back</Label>
-              <Textarea
-                id="card-back"
+              <Label>Back</Label>
+              <RichTextEditor
+                content={back}
+                onChange={setBack}
                 placeholder="Answer or definition…"
-                value={back}
-                onChange={(e) => setBack(e.target.value)}
-                maxLength={5000}
                 disabled={isPending}
               />
             </div>

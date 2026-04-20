@@ -101,6 +101,12 @@ export async function recordStudyResult(
     nextReviewAt = addDays(today, 1);
   } else {
     consecutiveCorrect = existing.consecutiveCorrect + 1;
+
+    if (consecutiveCorrect >= 5) {
+      await deleteCard(cardId, userId);
+      return null;
+    }
+
     nextReviewAt = consecutiveCorrect >= 2 ? addDays(today, 7) : addDays(today, 1);
   }
 

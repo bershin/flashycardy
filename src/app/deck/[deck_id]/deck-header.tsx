@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 import { EditDeckDialog } from "@/components/edit-deck-dialog";
 import { AddCardDialog } from "@/components/add-card-dialog";
+import { CreateDeckDialog } from "@/components/create-deck-dialog";
 import { deleteDeckAction } from "@/app/dashboard/actions";
 import { generateCardsWithAIAction } from "./actions";
 
@@ -33,12 +34,21 @@ interface DeckHeaderProps {
   };
   cardCount: number;
   hasAIFeature: boolean;
+  hasChildren?: boolean;
+  canAddSubDeck?: boolean;
 }
 
-export function DeckHeader({ deck, cardCount, hasAIFeature }: DeckHeaderProps) {
+export function DeckHeader({
+  deck,
+  cardCount,
+  hasAIFeature,
+  hasChildren = false,
+  canAddSubDeck = false,
+}: DeckHeaderProps) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [addCardOpen, setAddCardOpen] = useState(false);
+  const [createSubDeckOpen, setCreateSubDeckOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isGenerating, startGenerating] = useTransition();
@@ -92,53 +102,64 @@ export function DeckHeader({ deck, cardCount, hasAIFeature }: DeckHeaderProps) {
       {deck.description && (
         <p className="mt-1 text-muted-foreground">{deck.description}</p>
       )}
+
       <div className="mt-3 flex items-center gap-3">
-        <p className="text-sm text-muted-foreground">
-          {cardCount === 0
-            ? "No cards yet. Add some to get started!"
-            : `${cardCount} card${cardCount === 1 ? "" : "s"}`}
-        </p>
-        <Button size="sm" onClick={() => setAddCardOpen(true)}>
-          <Plus className="size-4" />
-          Add Card
-        </Button>
-        {hasAIFeature ? (
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleGenerateAI}
-            disabled={isGenerating}
-          >
-            <Sparkles className="size-4" />
-            {isGenerating ? "Generating…" : "Generate with AI"}
-          </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleGenerateAI}
-                />
-              }
-            >
-              <Sparkles className="size-4" />
-              Generate with AI
-            </TooltipTrigger>
-            <TooltipContent>
-              AI generation is a Pro feature. Click to view plans.
-            </TooltipContent>
-          </Tooltip>
+        {!hasChildren && (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {cardCount === 0
+                ? "No cards yet. Add some to get started!"
+                : `${cardCount} card${cardCount === 1 ? "" : "s"}`}
+            </p>
+            <Button size="sm" onClick={() => setAddCardOpen(true)}>
+              <Plus className="size-4" />
+              Add Card
+            </Button>
+            {hasAIFeature ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleGenerateAI}
+                disabled={isGenerating}
+              >
+                <Sparkles className="size-4" />
+                {isGenerating ? "Generating…" : "Generate with AI"}
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleGenerateAI}
+                    />
+                  }
+                >
+                  <Sparkles className="size-4" />
+                  Generate with AI
+                </TooltipTrigger>
+                <TooltipContent>
+                  AI generation is a Pro feature. Click to view plans.
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {cardCount > 0 && (
+              <Link
+                href={`/deck/${deck.id}/study`}
+                className={buttonVariants({ size: "sm", variant: "secondary" })}
+              >
+                <BookOpen className="size-3.5" />
+                Study
+              </Link>
+            )}
+          </>
         )}
-        {cardCount > 0 && (
-          <Link
-            href={`/deck/${deck.id}/study`}
-            className={buttonVariants({ size: "sm", variant: "secondary" })}
-          >
-            <BookOpen className="size-3.5" />
-            Study
-          </Link>
+        {(hasChildren || canAddSubDeck) && (
+          <Button size="sm" variant={hasChildren ? "default" : "outline"} onClick={() => setCreateSubDeckOpen(true)}>
+            <Plus className="size-4" />
+            New Sub-Deck
+          </Button>
         )}
       </div>
 
@@ -154,14 +175,20 @@ export function DeckHeader({ deck, cardCount, hasAIFeature }: DeckHeaderProps) {
         open={addCardOpen}
         onOpenChange={setAddCardOpen}
       />
+      <CreateDeckDialog
+        open={createSubDeckOpen}
+        onOpenChange={setCreateSubDeckOpen}
+        parentId={deck.id}
+      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete &ldquo;{deck.title}&rdquo;?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this deck and all of its cards. This
-              action cannot be undone.
+              {hasChildren
+                ? "This will permanently delete this deck, all of its sub-decks, and their cards. This action cannot be undone."
+                : "This will permanently delete this deck and all of its cards. This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

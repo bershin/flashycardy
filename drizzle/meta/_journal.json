@@ -8,6 +8,13 @@
       "when": 1776199282193,
       "tag": "0000_married_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776671689007,
+      "tag": "0001_previous_firestar",
+      "breakpoints": true
     }
   ]
 }

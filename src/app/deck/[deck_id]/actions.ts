@@ -17,8 +17,8 @@ import {
 
 const addCardSchema = z.object({
   deckId: z.number(),
-  front: z.string().min(1, "Front is required").max(5000),
-  back: z.string().min(1, "Back is required").max(5000),
+  front: z.string().min(1, "Front is required").max(500_000),
+  back: z.string().min(1, "Back is required").max(500_000),
 });
 
 type AddCardInput = z.infer<typeof addCardSchema>;
@@ -45,8 +45,8 @@ export async function addCardAction(data: AddCardInput) {
 
 const updateCardSchema = z.object({
   cardId: z.number(),
-  front: z.string().min(1, "Front is required").max(5000),
-  back: z.string().min(1, "Back is required").max(5000),
+  front: z.string().min(1, "Front is required").max(500_000),
+  back: z.string().min(1, "Back is required").max(500_000),
 });
 
 type UpdateCardInput = z.infer<typeof updateCardSchema>;
