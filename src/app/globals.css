@@ -130,6 +130,24 @@
   }
 }
 
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@media (display-mode: standalone) {
+  html {
+    -webkit-user-select: none;
+    user-select: text;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+}
+
 /* Tiptap editor styles */
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
