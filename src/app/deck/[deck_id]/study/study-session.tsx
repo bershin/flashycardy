@@ -304,7 +304,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
                 Question
               </p>
               <div
-                className="rich-content w-full text-left text-xl leading-relaxed"
+                className="rich-content w-full text-left text-3xl leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: current.front }}
               />
               <p className="mt-6 text-xs text-muted-foreground">
@@ -324,7 +324,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
                 Answer
               </p>
               <div
-                className="rich-content w-full text-left text-xl leading-relaxed"
+                className="rich-content w-full text-left text-3xl leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: current.back }}
               />
             </CardContent>

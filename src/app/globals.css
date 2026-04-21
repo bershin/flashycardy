@@ -220,8 +220,10 @@
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
   font-family: monospace;
-  font-size: 0.875rem;
-  overflow-x: auto;
+  font-size: 0.5em;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   margin-bottom: 0.25rem;
 }
 .rich-content code {
@@ -229,7 +231,12 @@
   border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
   font-family: monospace;
-  font-size: 0.875em;
+  font-size: 0.5em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.rich-content pre code {
+  font-size: 1em;
 }
 .rich-content img,
 .tiptap img {
