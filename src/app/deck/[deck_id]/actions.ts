@@ -90,6 +90,32 @@ export async function deleteCardAction(data: DeleteCardInput) {
   revalidatePath("/dashboard");
 }
 
+const cloneCardSchema = z.object({
+  cardId: z.number(),
+});
+
+type CloneCardInput = z.infer<typeof cloneCardSchema>;
+
+export async function cloneCardAction(data: CloneCardInput) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const parsed = cloneCardSchema.parse(data);
+
+  const existingCard = await getCardByIdForUser(parsed.cardId, userId);
+  if (!existingCard) throw new Error("Card not found");
+
+  const card = await insertCard({
+    deckId: existingCard.deckId,
+    front: existingCard.front,
+    back: existingCard.back,
+  });
+
+  revalidatePath(`/deck/${existingCard.deckId}`);
+  revalidatePath("/dashboard");
+  return card;
+}
+
 const AI_CARD_COUNT = 20;
 
 export async function generateCardsWithAIAction(deckId: number) {

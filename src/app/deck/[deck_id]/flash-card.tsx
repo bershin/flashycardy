@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Copy, Ellipsis, Pencil, Trash2 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
 } from "@/components/ui/card";
@@ -16,8 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EditCardDialog } from "@/components/edit-card-dialog";
-import { deleteCardAction } from "./actions";
+import { cloneCardAction, deleteCardAction } from "./actions";
 
 interface FlashCardProps {
   card: {
@@ -29,8 +36,23 @@ interface FlashCardProps {
 
 export function FlashCard({ card }: FlashCardProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [editCardId, setEditCardId] = useState(card.id);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  function handleClone() {
+    startTransition(async () => {
+      try {
+        const cloned = await cloneCardAction({ cardId: card.id });
+        if (cloned) {
+          setEditCardId(cloned.id);
+          setEditOpen(true);
+        }
+      } catch {
+        // clone failed silently
+      }
+    });
+  }
 
   function handleDelete() {
     startTransition(async () => {
@@ -47,30 +69,45 @@ export function FlashCard({ card }: FlashCardProps) {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <div
-              className="rich-content text-base font-semibold"
-              dangerouslySetInnerHTML={{ __html: card.front }}
-            />
-            <div className="flex shrink-0 gap-0.5">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setEditOpen(true)}
+          <div
+            className="rich-content min-w-0 overflow-hidden text-base font-semibold"
+            dangerouslySetInnerHTML={{ __html: card.front }}
+          />
+          <CardAction>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
               >
-                <Pencil className="size-3.5" />
-                <span className="sr-only">Edit card</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-3.5" />
-                <span className="sr-only">Delete card</span>
-              </Button>
-            </div>
-          </div>
+                <Ellipsis className="size-3.5" />
+                <span className="sr-only">Card actions</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditCardId(card.id);
+                    setEditOpen(true);
+                  }}
+                >
+                  <Pencil />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleClone}
+                  disabled={isPending}
+                >
+                  <Copy />
+                  Clone
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <div
@@ -81,7 +118,7 @@ export function FlashCard({ card }: FlashCardProps) {
       </Card>
 
       <EditCardDialog
-        cardId={card.id}
+        cardId={editCardId}
         front={card.front}
         back={card.back}
         open={editOpen}
