@@ -8,7 +8,7 @@ import {
 } from "@/db/queries/decks";
 import { getCardsByDeckForUser } from "@/db/queries/cards";
 import { DeckHeader } from "./deck-header";
-import { FlashCard } from "./flash-card";
+import { CardGrid } from "./card-grid";
 import { SortableChildDecks } from "./sortable-child-decks";
 
 export default async function DeckPage({
@@ -76,11 +76,7 @@ export default async function DeckPage({
           })}
         />
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {cards.map((card) => (
-            <FlashCard key={card.id} card={card} />
-          ))}
-        </div>
+        <CardGrid cards={cards} />
       )}
     </div>
   );
