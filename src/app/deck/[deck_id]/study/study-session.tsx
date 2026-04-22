@@ -287,13 +287,17 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
       </div>
 
       {/* Flashcard */}
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={flip}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") flip();
+        }}
         className="w-full cursor-pointer perspective-[1000px]"
       >
         <div
-          className={`relative transition-transform duration-500 transform-3d ${
+          className={`grid transition-transform duration-500 transform-3d *:col-start-1 *:row-start-1 ${
             flipped ? "transform-[rotateY(180deg)]" : ""
           }`}
         >
@@ -318,7 +322,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
           </Card>
 
           {/* Back */}
-          <Card className="absolute inset-0 min-h-[280px] backface-hidden transform-[rotateY(180deg)]">
+          <Card className="min-h-[280px] backface-hidden transform-[rotateY(180deg)]">
             <CardContent className="flex min-h-[280px] flex-col items-center justify-center p-8">
               <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Answer
@@ -330,7 +334,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
             </CardContent>
           </Card>
         </div>
-      </button>
+      </div>
 
       {/* Rating / Navigation */}
       {flipped ? (

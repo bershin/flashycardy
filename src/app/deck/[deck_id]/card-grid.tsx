@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlashCard } from "./flash-card";
@@ -21,11 +21,15 @@ function shuffleArray<T>(arr: T[]): T[] {
 export function CardGrid({ cards }: CardGridProps) {
   const [displayCards, setDisplayCards] = useState(cards);
 
+  useEffect(() => {
+    setDisplayCards(cards);
+  }, [cards]);
+
   const handleShuffle = useCallback(() => {
     setDisplayCards(shuffleArray(displayCards));
   }, [displayCards]);
 
-  if (cards.length === 0) return null;
+  if (displayCards.length === 0) return null;
 
   return (
     <div className="mt-8">
