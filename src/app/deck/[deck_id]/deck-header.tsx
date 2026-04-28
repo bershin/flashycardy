@@ -72,6 +72,7 @@ export function DeckHeader({
     startGenerating(async () => {
       try {
         await generateCardsWithAIAction(deck.id);
+        router.refresh();
       } catch {
         // TODO: surface error via toast
       }

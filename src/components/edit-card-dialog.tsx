@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function EditCardDialog({
   open,
   onOpenChange,
 }: EditCardDialogProps) {
+  const router = useRouter();
   const [front, setFront] = useState(initialFront);
   const [back, setBack] = useState(initialBack);
   const [isPending, startTransition] = useTransition();
@@ -71,6 +73,7 @@ export function EditCardDialog({
           back,
         });
         onOpenChange(false);
+        router.refresh();
       } catch {
         setError("Failed to update card. Please try again.");
       }

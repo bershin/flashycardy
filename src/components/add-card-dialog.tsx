@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +26,7 @@ export function AddCardDialog({
   open,
   onOpenChange,
 }: AddCardDialogProps) {
+  const router = useRouter();
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -68,6 +70,7 @@ export function AddCardDialog({
         });
         resetForm();
         onOpenChange(false);
+        router.refresh();
       } catch {
         setError("Failed to add card. Please try again.");
       }
