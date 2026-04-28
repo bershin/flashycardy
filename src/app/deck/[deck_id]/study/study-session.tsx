@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
 import {
   ArrowLeft,
   RotateCcw,
@@ -44,6 +44,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
   const [ratings, setRatings] = useState<Map<number, Rating>>(new Map());
   const [round, setRound] = useState(1);
   const [isPending, startTransition] = useTransition();
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const current = studyCards[currentIndex];
   const total = studyCards.length;
@@ -63,6 +64,18 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
 
   const flip = useCallback(() => setFlipped((f) => !f), []);
 
+  const advanceWithoutAnimation = useCallback(() => {
+    const el = cardRef.current;
+    if (el) {
+      el.style.transition = "none";
+      el.style.transform = "rotateY(0deg)";
+      el.offsetHeight; // force reflow so the reset applies immediately
+      el.style.transition = "";
+      el.style.transform = "";
+    }
+    setFlipped(false);
+  }, []);
+
   const rate = useCallback(
     (rating: Rating) => {
       setRatings((prev) => {
@@ -76,13 +89,13 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
       });
 
       if (currentIndex < total - 1) {
+        advanceWithoutAnimation();
         setCurrentIndex((i) => i + 1);
-        setFlipped(false);
       } else {
         setFinished(true);
       }
     },
-    [current, currentIndex, total, deckId],
+    [current, currentIndex, total, deckId, advanceWithoutAnimation],
   );
 
   const goPrev = useCallback(() => {
@@ -297,6 +310,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
         className="w-full cursor-pointer perspective-[1000px]"
       >
         <div
+          ref={cardRef}
           className={`grid transition-transform duration-500 transform-3d *:col-start-1 *:row-start-1 ${
             flipped ? "transform-[rotateY(180deg)]" : ""
           }`}

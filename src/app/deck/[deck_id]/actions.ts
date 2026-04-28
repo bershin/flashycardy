@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, refresh } from "next/cache";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -38,8 +38,8 @@ export async function addCardAction(data: AddCardInput) {
     back: parsed.back,
   });
 
-  revalidatePath(`/deck/${parsed.deckId}`);
   revalidatePath("/dashboard");
+  refresh();
   return card;
 }
 
@@ -65,7 +65,8 @@ export async function updateCardAction(data: UpdateCardInput) {
     back: parsed.back,
   });
 
-  revalidatePath(`/deck/${existingCard.deckId}`);
+  revalidatePath("/dashboard");
+  refresh();
   return card;
 }
 
@@ -86,8 +87,8 @@ export async function deleteCardAction(data: DeleteCardInput) {
 
   await deleteCard(parsed.cardId, userId);
 
-  revalidatePath(`/deck/${existingCard.deckId}`);
   revalidatePath("/dashboard");
+  refresh();
 }
 
 const cloneCardSchema = z.object({
@@ -111,8 +112,8 @@ export async function cloneCardAction(data: CloneCardInput) {
     back: existingCard.back,
   });
 
-  revalidatePath(`/deck/${existingCard.deckId}`);
   revalidatePath("/dashboard");
+  refresh();
   return card;
 }
 
@@ -157,6 +158,6 @@ export async function generateCardsWithAIAction(deckId: number) {
 
   await bulkInsertCards(rows);
 
-  revalidatePath(`/deck/${deckId}`);
   revalidatePath("/dashboard");
+  refresh();
 }

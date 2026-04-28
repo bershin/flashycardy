@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, refresh } from "next/cache";
 import { z } from "zod";
 import { recordStudyResult } from "@/db/queries/cards";
 
@@ -20,8 +20,8 @@ export async function rateCardAction(data: RateCardInput) {
   const parsed = rateCardSchema.parse(data);
   const card = await recordStudyResult(parsed.cardId, userId, parsed.rating);
 
-  revalidatePath(`/deck/${parsed.deckId}/study`);
   revalidatePath(`/deck/${parsed.deckId}`);
+  refresh();
 
   return card;
 }
