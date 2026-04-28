@@ -126,7 +126,10 @@ export function FlashCard({ card }: FlashCardProps) {
         front={card.front}
         back={card.back}
         open={editOpen}
-        onOpenChange={setEditOpen}
+        onOpenChange={(nextOpen) => {
+          setEditOpen(nextOpen);
+          if (!nextOpen) setEditCardId(card.id);
+        }}
       />
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

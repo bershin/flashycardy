@@ -35,16 +35,21 @@ export function EditCardDialog({
   const [back, setBack] = useState(initialBack);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [prevCardId, setPrevCardId] = useState(cardId);
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  function resetForm() {
+  if (cardId !== prevCardId || (open && !prevOpen)) {
+    setPrevCardId(cardId);
     setFront(initialFront);
     setBack(initialBack);
     setError(null);
   }
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);
-    if (nextOpen) resetForm();
   }
 
   function handleSubmit(e: React.FormEvent) {
