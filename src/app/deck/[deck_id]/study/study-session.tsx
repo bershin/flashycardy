@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
+import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
 import {
   ArrowLeft,
   RotateCcw,
@@ -44,7 +44,6 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
   const [ratings, setRatings] = useState<Map<number, Rating>>(new Map());
   const [round, setRound] = useState(1);
   const [isPending, startTransition] = useTransition();
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const current = studyCards[currentIndex];
   const total = studyCards.length;
@@ -64,18 +63,6 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
 
   const flip = useCallback(() => setFlipped((f) => !f), []);
 
-  const advanceWithoutAnimation = useCallback(() => {
-    const el = cardRef.current;
-    if (el) {
-      el.style.transition = "none";
-      el.style.transform = "rotateY(0deg)";
-      el.offsetHeight; // force reflow so the reset applies immediately
-      el.style.transition = "";
-      el.style.transform = "";
-    }
-    setFlipped(false);
-  }, []);
-
   const rate = useCallback(
     (rating: Rating) => {
       setRatings((prev) => {
@@ -89,13 +76,13 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
       });
 
       if (currentIndex < total - 1) {
-        advanceWithoutAnimation();
+        setFlipped(false);
         setCurrentIndex((i) => i + 1);
       } else {
         setFinished(true);
       }
     },
-    [current, currentIndex, total, deckId, advanceWithoutAnimation],
+    [current, currentIndex, total, deckId],
   );
 
   const goPrev = useCallback(() => {
@@ -301,30 +288,31 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
 
       {/* Flashcard */}
       <div
-        role="button"
-        tabIndex={0}
-        onClick={flip}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") flip();
-        }}
-        className="w-full cursor-pointer perspective-[1000px]"
+        className={`grid w-full gap-4 ${flipped ? "md:grid-cols-2" : ""}`}
       >
-        <div
-          ref={cardRef}
-          className={`grid transition-transform duration-500 transform-3d *:col-start-1 *:row-start-1 ${
-            flipped ? "transform-[rotateY(180deg)]" : ""
-          }`}
+        {/* Question */}
+        <Card
+          role={flipped ? undefined : "button"}
+          tabIndex={flipped ? undefined : 0}
+          onClick={flipped ? undefined : flip}
+          onKeyDown={
+            flipped
+              ? undefined
+              : (e) => {
+                  if (e.key === "Enter") flip();
+                }
+          }
+          className={`min-h-[280px] ${flipped ? "" : "cursor-pointer"}`}
         >
-          {/* Front */}
-          <Card className="min-h-[280px] backface-hidden">
-            <CardContent className="flex min-h-[280px] flex-col items-center justify-center p-8">
-              <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Question
-              </p>
-              <div
-                className="rich-content w-full text-left text-3xl leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: current.front }}
-              />
+          <CardContent className="flex min-h-[280px] flex-col items-center justify-center p-8">
+            <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Question
+            </p>
+            <div
+              className="rich-content w-full text-left text-3xl leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: current.front }}
+            />
+            {!flipped && (
               <p className="mt-6 text-xs text-muted-foreground">
                 Click or press{" "}
                 <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[0.7rem]">
@@ -332,11 +320,13 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
                 </kbd>{" "}
                 to reveal answer
               </p>
-            </CardContent>
-          </Card>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Back */}
-          <Card className="min-h-[280px] backface-hidden transform-[rotateY(180deg)]">
+        {/* Answer */}
+        {flipped && (
+          <Card className="min-h-[280px] border-primary/30 bg-primary/5">
             <CardContent className="flex min-h-[280px] flex-col items-center justify-center p-8">
               <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Answer
@@ -347,7 +337,7 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
               />
             </CardContent>
           </Card>
-        </div>
+        )}
       </div>
 
       {/* Rating / Navigation */}
