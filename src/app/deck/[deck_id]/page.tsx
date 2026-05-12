@@ -62,7 +62,7 @@ export default async function DeckPage({
             endOfToday.setDate(endOfToday.getDate() + 1);
             const totalCards = child.cards.length;
             const dueCount = child.cards.filter(
-              (c) => c.nextReviewAt < endOfToday,
+              (c) => c.nextReviewAt <= endOfToday,
             ).length;
 
             return {
