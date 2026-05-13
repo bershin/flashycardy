@@ -57,13 +57,19 @@ export default async function DeckPage({
         <SortableChildDecks
           parentId={deckId}
           decks={childDecks.map((child) => {
-            const endOfToday = new Date();
-            endOfToday.setHours(0, 0, 0, 0);
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const endOfToday = new Date(startOfToday);
             endOfToday.setDate(endOfToday.getDate() + 1);
             const totalCards = child.cards.length;
             const dueCount = child.cards.filter(
               (c) => c.nextReviewAt <= endOfToday,
             ).length;
+            const studiedToday = child.cards.some(
+              (c) =>
+                c.updatedAt >= startOfToday &&
+                c.updatedAt.getTime() !== c.createdAt.getTime(),
+            );
 
             return {
               id: child.id,
@@ -72,6 +78,7 @@ export default async function DeckPage({
               updatedAtFormatted: child.updatedAt.toLocaleDateString("en-US"),
               totalCards,
               dueCount,
+              studiedToday,
             };
           })}
         />

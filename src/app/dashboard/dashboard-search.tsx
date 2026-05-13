@@ -36,6 +36,7 @@ interface DeckWithCards {
   cards: CardData[];
   totalCards: number;
   dueCount: number;
+  studiedToday: boolean;
   childCount: number;
 }
 
@@ -183,6 +184,7 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
                   updatedAtFormatted: deck.updatedAtFormatted,
                   totalCards: deck.totalCards,
                   dueCount: deck.dueCount,
+                  studiedToday: deck.studiedToday,
                   childCount: deck.childCount,
                 }}
               />
@@ -218,6 +220,7 @@ export function DashboardSearch({ decks }: DashboardSearchProps) {
                       updatedAtFormatted: deck.updatedAtFormatted,
                       totalCards: deck.totalCards,
                       dueCount: deck.dueCount,
+                      studiedToday: deck.studiedToday,
                       childCount: deck.childCount,
                     }}
                   />

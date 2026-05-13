@@ -27,6 +27,7 @@ interface ChildDeck {
   updatedAtFormatted: string;
   totalCards: number;
   dueCount: number;
+  studiedToday: boolean;
 }
 
 function SortableItem({

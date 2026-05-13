@@ -71,19 +71,26 @@ export default async function DashboardPage() {
 
       <DashboardSearch
         decks={userDecks.map((deck) => {
-          const endOfToday = new Date();
-          endOfToday.setHours(0, 0, 0, 0);
+          const startOfToday = new Date();
+          startOfToday.setHours(0, 0, 0, 0);
+          const endOfToday = new Date(startOfToday);
           endOfToday.setDate(endOfToday.getDate() + 1);
           const totalCards = deck.cards.length;
           const dueCount = deck.cards.filter(
             (c) => c.nextReviewAt <= endOfToday,
           ).length;
+          const studiedToday = deck.cards.some(
+            (c) =>
+              c.updatedAt >= startOfToday &&
+              c.updatedAt.getTime() !== c.createdAt.getTime(),
+          );
 
           return {
             ...deck,
             updatedAtFormatted: deck.updatedAt.toLocaleDateString("en-US"),
             totalCards,
             dueCount,
+            studiedToday,
             childCount: deck.childCount,
           };
         })}

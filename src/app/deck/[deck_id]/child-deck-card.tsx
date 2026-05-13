@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, CheckCircle, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, CheckCircle, CircleCheckBig, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,6 +33,7 @@ interface ChildDeckCardProps {
     updatedAtFormatted: string;
     totalCards: number;
     dueCount: number;
+    studiedToday: boolean;
   };
 }
 
@@ -68,6 +69,12 @@ export function ChildDeckCard({ deck }: ChildDeckCardProps) {
             Updated {deck.updatedAtFormatted}
           </p>
           <div className="flex items-center gap-2">
+            {deck.studiedToday && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-600 dark:text-violet-400">
+                <CircleCheckBig className="size-3" />
+                Studied today
+              </span>
+            )}
             {deck.totalCards > 0 &&
               (deck.dueCount > 0 ? (
                 <button
