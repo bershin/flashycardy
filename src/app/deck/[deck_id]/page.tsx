@@ -65,11 +65,9 @@ export default async function DeckPage({
             const dueCount = child.cards.filter(
               (c) => c.nextReviewAt <= endOfToday,
             ).length;
-            const studiedToday = child.cards.some(
-              (c) =>
-                c.updatedAt >= startOfToday &&
-                c.updatedAt.getTime() !== c.createdAt.getTime(),
-            );
+            const studiedToday =
+              child.lastStudiedAt !== null &&
+              child.lastStudiedAt >= startOfToday;
 
             return {
               id: child.id,

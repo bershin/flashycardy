@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath, refresh } from "next/cache";
 import { z } from "zod";
 import { recordStudyResult } from "@/db/queries/cards";
+import { markDeckStudied } from "@/db/queries/decks";
 
 const rateCardSchema = z.object({
   cardId: z.number(),
@@ -24,4 +25,13 @@ export async function rateCardAction(data: RateCardInput) {
   refresh();
 
   return card;
+}
+
+export async function markDeckStudiedAction(deckId: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await markDeckStudied(deckId, userId);
+  revalidatePath("/dashboard");
+  revalidatePath(`/deck/${deckId}`);
 }

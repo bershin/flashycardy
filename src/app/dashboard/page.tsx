@@ -79,11 +79,8 @@ export default async function DashboardPage() {
           const dueCount = deck.cards.filter(
             (c) => c.nextReviewAt <= endOfToday,
           ).length;
-          const studiedToday = deck.cards.some(
-            (c) =>
-              c.updatedAt >= startOfToday &&
-              c.updatedAt.getTime() !== c.createdAt.getTime(),
-          );
+          const studiedToday =
+            deck.lastStudiedAt !== null && deck.lastStudiedAt >= startOfToday;
 
           return {
             ...deck,

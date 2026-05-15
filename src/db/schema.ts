@@ -13,6 +13,7 @@ export const decks = pgTable("decks", {
   description: text(),
   parentId: integer(),
   position: integer().default(0).notNull(),
+  lastStudiedAt: timestamp(),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
 });

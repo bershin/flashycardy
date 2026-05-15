@@ -68,9 +68,17 @@ export async function getDecksWithCardsByUser(userId: string) {
     const isParent = deckChildren.length > 0;
 
     let deckCards: (typeof allCards)[number][] = [];
+    let lastStudiedAt = deck.lastStudiedAt;
+
     if (isParent) {
       for (const child of deckChildren) {
         deckCards = deckCards.concat(cardsByDeck.get(child.id) ?? []);
+        if (
+          child.lastStudiedAt &&
+          (!lastStudiedAt || child.lastStudiedAt > lastStudiedAt)
+        ) {
+          lastStudiedAt = child.lastStudiedAt;
+        }
       }
     } else {
       deckCards = cardsByDeck.get(deck.id) ?? [];
@@ -78,6 +86,7 @@ export async function getDecksWithCardsByUser(userId: string) {
 
     return {
       ...deck,
+      lastStudiedAt,
       cards: deckCards,
       childCount: deckChildren.length,
     };
@@ -154,6 +163,15 @@ export async function updateDeck(
       description: data.description ?? null,
       updatedAt: new Date(),
     })
+    .where(and(eq(decks.id, deckId), eq(decks.userId, userId)))
+    .returning();
+  return deck;
+}
+
+export async function markDeckStudied(deckId: number, userId: string) {
+  const [deck] = await db
+    .update(decks)
+    .set({ lastStudiedAt: new Date() })
     .where(and(eq(decks.id, deckId), eq(decks.userId, userId)))
     .returning();
   return deck;

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { rateCardAction } from "./actions";
+import { rateCardAction, markDeckStudiedAction } from "./actions";
 
 interface StudyCard {
   id: number;
@@ -124,6 +124,12 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
     const rated = studyCards.slice(0, currentIndex);
     setStudyCards([...rated, ...shuffleArray(unrated)]);
   }, [studyCards, currentIndex]);
+
+  useEffect(() => {
+    if (finished && round === 1) {
+      markDeckStudiedAction(deckId);
+    }
+  }, [finished, round, deckId]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
